@@ -958,6 +958,33 @@ button:active {
     display: none !important;
   }
 
+  body.printing-students .navbar,
+  body.printing-students .container > .card:not(#studentsCard) {
+    display: none !important;
+  }
+
+  body.printing-students .container {
+    margin: 0;
+    max-width: none;
+    padding: 0;
+  }
+
+  body.printing-students #studentsCard {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  body.printing-students .student-table th:last-child,
+  body.printing-students .student-table td:last-child {
+    display: none;
+  }
+
+  body.printing-students .table-wrap {
+    overflow: visible;
+  }
+
   body.printing-ticket .navbar,
   body.printing-ticket .container > .card:not(#ticketCard),
   body.printing-ticket #ticketForm,
@@ -985,10 +1012,7 @@ button:active {
   }
 
   body.printing-chart .navbar,
-  body.printing-chart .container > .card:not(#seatingCard),
-  body.printing-chart .card-head,
-  body.printing-chart .legend,
-  body.printing-chart .site-footer {
+  body.printing-chart .container > .card:not(#seatingCard) {
     display: none !important;
   }
 

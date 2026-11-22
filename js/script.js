@@ -227,7 +227,9 @@ function makeBranchChip(branch) {
 
 function renderStudentList() {
   const searchInput = byId("tableSearchInput");
-  const query = (searchInput?.value || "").trim().toUpperCase();
+  const query = document.body.classList.contains("printing-students")
+    ? ""
+    : (searchInput?.value || "").trim().toUpperCase();
   const list = byId("studentList");
   list.replaceChildren();
 
@@ -687,6 +689,18 @@ function printSeatingChart() {
   document.body.classList.add("printing-chart");
   window.print();
   document.body.classList.remove("printing-chart");
+}
+
+function printStudents() {
+  if (!students.length) {
+    notify("There are no registered students to print.", "error");
+    return;
+  }
+  document.body.classList.add("printing-students");
+  renderStudentList();
+  window.print();
+  document.body.classList.remove("printing-students");
+  renderStudentList();
 }
 
 /* ------------------------------------------------------------------ */

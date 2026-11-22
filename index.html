@@ -96,14 +96,15 @@
       </section>
 
       <!-- Registered students with search, export, and delete -->
-      <section class="card" aria-labelledby="studentsHeading">
+      <section class="card" id="studentsCard" aria-labelledby="studentsHeading">
         <div class="card-head card-head-wrap">
           <h2 id="studentsHeading">Registered students</h2>
-          <div class="table-tools">
+          <div class="table-tools no-print">
             <div class="field field-search">
               <label class="sr-only" for="tableSearchInput">Search students</label>
               <input type="search" id="tableSearchInput" placeholder="Search USN, name or branch" />
             </div>
+            <button type="button" class="btn-secondary" onclick="printStudents()">Print registered students</button>
             <button type="button" class="btn-secondary" onclick="exportStudentsCSV()">Export CSV</button>
           </div>
         </div>
