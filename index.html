@@ -1,0 +1,245 @@
+<!--
+  Exam Seating & Digital Hall Ticket Portal
+  Page structure and form controls.
+  JavaScript in js/script.js performs the data and seating operations.
+  Styles are defined in css/style.css.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Register exam candidates, plan branch-mixed seating across rooms, and issue printable digital hall tickets." />
+    <title>ExamCell Portal — Seating & Hall Tickets</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="navbar">
+      <div class="navbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">EC</span>
+          <div>
+            <h1>ExamCell Portal</h1>
+            <p>Exam seating &amp; digital hall tickets</p>
+          </div>
+        </div>
+        <span class="status-pill" id="headerCount">0 students registered</span>
+      </div>
+    </header>
+
+    <main class="container" id="main">
+      <!-- SECTION 1: Student registration and room configuration -->
+      <section class="card" aria-labelledby="registerHeading">
+        <div class="card-head">
+          <h2 id="registerHeading">1. Register students &amp; set up rooms</h2>
+          <span class="card-note">Data is saved in this browser only</span>
+        </div>
+
+        <form class="form-row" id="addStudentForm" novalidate>
+          <div class="field">
+            <label for="usnInput">USN</label>
+            <input type="text" id="usnInput" placeholder="4BD25CS001" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field field-grow">
+            <label for="nameInput">Full name</label>
+            <input type="text" id="nameInput" placeholder="Student full name" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="branchInput">Branch</label>
+            <select id="branchInput">
+              <option value="CSE">CSE</option>
+              <option value="ECE">ECE</option>
+              <option value="ME">ME</option>
+              <option value="AIDS">AIDS</option>
+              <option value="CSE-IOT">CSE-IOT</option>
+              <option value="CIVIL">CIVIL</option>
+            </select>
+          </div>
+          <button type="submit">+ Add student</button>
+        </form>
+        <p class="error-text" id="addStudentError" role="alert" hidden></p>
+
+        <details class="bulk-add">
+          <summary>Add several students at once</summary>
+          <p class="hint">One student per line as <samp>USN, Name, Branch</samp>, or paste USNs only to add names later. Branch is optional.</p>
+          <label class="sr-only" for="bulkInput">Students to add in bulk</label>
+          <textarea id="bulkInput" rows="4" placeholder="4BD25CS001, Aarav Kumar, CSE&#10;4BD25CS002, Priya Shetty, CSE&#10;4BD25EC010"></textarea>
+          <div class="form-row form-row-tight">
+            <button type="button" class="btn-secondary" onclick="addBulkStudents()">Add all</button>
+            <span class="hint" id="bulkFeedback" role="status"></span>
+          </div>
+        </details>
+
+        <div class="room-setup">
+          <div class="form-row form-row-tight">
+            <div class="field">
+              <label for="roomNoInput">Room name</label>
+              <input type="text" id="roomNoInput" value="Room 101" autocomplete="off" />
+            </div>
+            <div class="field field-narrow">
+              <label for="colsInput">Columns</label>
+              <input type="number" id="colsInput" value="4" min="2" max="8" />
+            </div>
+            <div class="field field-narrow">
+              <label for="capacityInput">Rows</label>
+              <input type="number" id="capacityInput" value="6" min="1" max="40" />
+            </div>
+            <button type="button" class="btn-success" onclick="generateSeating()">Generate seating plan</button>
+          </div>
+          <p class="hint" id="capacityHint"></p>
+        </div>
+
+        <!-- Updated dynamically with the total number of registered students -->
+        <p id="statusText" class="status" role="status">Total students registered: 0</p>
+      </section>
+
+      <!-- Registered students with search, export, and delete -->
+      <section class="card" aria-labelledby="studentsHeading">
+        <div class="card-head card-head-wrap">
+          <h2 id="studentsHeading">Registered students</h2>
+          <div class="table-tools">
+            <div class="field field-search">
+              <label class="sr-only" for="tableSearchInput">Search students</label>
+              <input type="search" id="tableSearchInput" placeholder="Search USN, name or branch" />
+            </div>
+            <button type="button" class="btn-secondary" onclick="exportStudentsCSV()">Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="student-table">
+            <thead>
+              <tr>
+                <th scope="col">USN</th>
+                <th scope="col">Name</th>
+                <th scope="col">Branch</th>
+                <th scope="col">Room</th>
+                <th scope="col">Seat</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="studentList"></tbody>
+          </table>
+        </div>
+        <p class="hint" id="tableSummary"></p>
+      </section>
+
+      <!-- SECTION 2: Classroom seating matrix -->
+      <section class="card" id="seatingCard" aria-labelledby="seatingHeading">
+        <div class="card-head">
+          <h2 id="seatingHeading">2. Classroom seating arrangement</h2>
+          <button type="button" class="btn-secondary no-print" onclick="printSeatingChart()">Print seating chart</button>
+        </div>
+        <ul class="legend" id="branchLegend" aria-label="Branch colour legend"></ul>
+        <div id="seatingPlans">
+          <p class="placeholder">
+            Register students, then choose rows, columns, and a room, and click "Generate seating plan".
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Digital hall-ticket generator -->
+      <section class="card" id="ticketCard" aria-labelledby="ticketHeading">
+        <h2 id="ticketHeading">3. Student digital hall ticket</h2>
+        <form class="form-row" id="ticketForm" novalidate>
+          <div class="field field-grow">
+            <label for="searchUsnInput">Student USN</label>
+            <input type="text" id="searchUsnInput" placeholder="Start typing a USN…" autocomplete="off" spellcheck="false" list="usnSuggestions" />
+            <datalist id="usnSuggestions"></datalist>
+          </div>
+          <button type="submit">View hall ticket</button>
+        </form>
+        <p class="error-text" id="ticketError" role="alert" hidden></p>
+
+        <!-- Printable hall-ticket card; hidden until a valid USN is found -->
+        <div id="hallTicketBox" class="hall-ticket hidden" aria-live="polite">
+          <div class="ht-header">
+            <h3>BEARYS INSTITUTE OF TECHNOLOGY</h3>
+            <p>END-SEMESTER EXAMINATION HALL TICKET</p>
+          </div>
+
+          <table class="ht-info-table">
+            <tr>
+              <td><strong>USN / Roll No:</strong> <span id="htUsn"></span></td>
+              <td><strong>Branch:</strong> <span id="htBranch"></span></td>
+            </tr>
+            <tr>
+              <td><strong>Candidate Name:</strong> <span id="htName"></span></td>
+              <td><strong>Exam Session:</strong> Morning (9:30 AM – 12:30 PM)</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Allotted Exam Hall:</strong> <span id="htRoom"></span></td>
+              <td><strong>Allotted Seat / Bench:</strong> <span id="htSeat"></span></td>
+            </tr>
+          </table>
+
+          <table class="ht-subjects-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Subject Code</th>
+                <th scope="col">Subject Title</th>
+                <th scope="col">Invigilator Sign</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>24-Nov-2026</td>
+                <td>25CS301</td>
+                <td>Data Structures &amp; Algorithms</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>26-Nov-2026</td>
+                <td>25CS302</td>
+                <td>Operating Systems</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>28-Nov-2026</td>
+                <td>25CS303</td>
+                <td>Database Management Systems</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="ht-footer">
+            <p>
+              <strong>Instructions:</strong> Carry your College ID Card. Report
+              to the exam hall 15 minutes early.
+            </p>
+            <p class="sign-box">Controller of Examinations</p>
+          </div>
+
+          <div class="ticket-actions no-print">
+            <button type="button" onclick="printHallTicket()">Print / save as PDF</button>
+            <span class="ticket-notice" id="ticketNotice" hidden></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>ExamCell Portal · Records stay in this browser · <button type="button" class="link-button" onclick="clearAllData()">Clear all data</button></p>
+    </footer>
+
+    <!-- Toast stack for success and error feedback -->
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+    <!-- Accessible replacement for window.confirm -->
+    <div class="modal hidden" id="confirmDialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <div class="modal-panel">
+        <h2 id="confirmTitle">Confirm</h2>
+        <p id="confirmMessage"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="confirmCancel">Cancel</button>
+          <button type="button" class="btn-danger-solid" id="confirmAccept">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>
